@@ -2,20 +2,15 @@ function main() {
     const canvas = document.getElementById('scene')
     if (canvas.getContext) {
         const ctx = canvas.getContext('2d')
-        // ctx.canvas.width = window.innerWidth / 2;
-        // ctx.canvas.height = window.innerHeight / 2;
+        ctx.canvas.width = window.innerWidth/2 + 100;
+        ctx.canvas.height = window.innerHeight/2 + 100;
 
-        ctx.canvas.width = 600;
-        ctx.canvas.height = 600;
+        // ctx.canvas.width = 600;
+        // ctx.canvas.height = 600;
 
         const createPoint = (x, y) => {
             let point = new Uint16Array([x, y])
             return point
-        }
-
-        const setCanvasFont = (ctx, font) => {
-            ctx.fillStyle = `${font.fontColor}`
-            ctx.font = `${font.fontSize}px ${font.fontStyle}`
         }
 
         const distance_pythagoras = (p1, p2) => {
@@ -31,96 +26,66 @@ function main() {
             ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
         }
 
-        paintBackground(ctx)
-
-        let n = 100
-        let points = []
-        let colors = []
-
-        for (let i = 0; i < n; i++) {
-            points.push(createPoint(
-                Math.round(ctx.canvas.width * Math.random()),
-                Math.round(ctx.canvas.height * Math.random())
-            ))
-            colors[i] = `rgb(
-                ${255 * Math.random()},
-                ${255 * Math.random()},
-                ${255 * Math.random()/3}
-                )`
+        function generateRandomSeeds(n, gridDims) {
+            let seeds = []
+            for (let i = 0; i < n; i++) {
+                seeds.push(createPoint(
+                    Math.round((gridDims[0] - 1) * Math.random()),
+                    Math.round((gridDims[1] - 1) * Math.random())
+                ))
+            }
+            return seeds
         }
 
-        function draw_voronoi(x, y, width, height, points) {
-            for (let i = 0; i < width; i++) {
-                for (let j = 0; j < height; j++) {
-                    let pixel = createPoint(i, j)
+        function generateRandomColors(n) {
+            let colors = []
+            for (let i = 0; i < n; i++) {
+                colors[i] = `rgb(
+                ${255 * Math.random()},
+                ${255 * Math.random()},
+                ${255 * Math.random()}
+                )`
+            }
+            return colors
+        }
+
+        function draw_voronoi(x, y, seeds, colors, pointPixelSize, gridDims) {
+            for (let i = 0; i < gridDims[0]; i++) {
+                for (let j = 0; j < gridDims[1]; j++) {
+                    let point = createPoint(i, j)
                     let min_dist = Infinity
 
-                    let closest_point
-                    for (let point of points) {
-                        let dist = distance_manhattan(point, pixel)
-                        // let dist = distance_pythagoras(point, pixel)
+                    let closest_seed
+                    for (let seed of seeds) {
+                        let dist = distance_manhattan(seed, point)
+                        // let dist = distance_pythagoras(seed, point)
                         if (dist < min_dist) {
                             min_dist = dist
-                            closest_point = point
+                            closest_seed = seed
                         }
                     }
-                    ctx.fillStyle = colors[points.indexOf(closest_point)]
-                    ctx.fillRect(x + i, y + j, 1, 1)
+                    ctx.fillStyle = colors[seeds.indexOf(closest_seed)]
+                    ctx.fillRect(x + (i * pointPixelSize), y + (j * pointPixelSize), pointPixelSize, pointPixelSize)
                 }
             }
 
-            for (let point of points) {
+            for (let seed of seeds) {
                 ctx.fillStyle = "white"
-                ctx.fillRect(point[0], point[1], 2, 2)
+                ctx.fillRect(seed[0] * pointPixelSize, seed[1] * pointPixelSize, pointPixelSize, pointPixelSize)
             }
         }
 
-        draw_voronoi(0, 0, 600, 600, points)
+        paintBackground(ctx)
 
-        function startLoop() {
-            let done = false
-            let i = 0, j = 0
-            let pixels_per_frame = 100
+        let n = 25 //number of seeds
+        let pointPixelSize = 4 //1 point or cell will be n x n pixels big
+        let gridDims = new Uint16Array(2)
+        gridDims[0] = ctx.canvas.width/pointPixelSize //width of the grid
+        gridDims[1] = ctx.canvas.width/pointPixelSize //height of the grid
+        let seeds = generateRandomSeeds(n, gridDims)  // randomly generated seeds
+        let colors = generateRandomColors(n) // randomly generate color for each seed
 
-            function loop() {
-                if (!done) {
-                    window.requestAnimationFrame(loop)
-                }
-
-
-                for (let r = 0; r < pixels_per_frame; r++) {
-                    if (j == ctx.canvas.height) {
-                        i++
-                        j = 0
-                        if (i > ctx.canvas.width) {
-                            done = true
-                        }
-                        break
-                    }
-
-                    let pixel = createPoint(i, j)
-                    let min_dist = ctx.canvas.width + ctx.canvas.height
-
-                    let closest_point
-                    for (let point of points) {
-                        let dist = distance_pythogoras(point, pixel)
-                        if (dist < min_dist) {
-                            min_dist = dist
-                            closest_point = point
-                        }
-                    }
-
-                    ctx.fillStyle = colors[points.indexOf(closest_point)]
-                    ctx.fillRect(i, j, 1, 1)
-                    j++
-                }
-
-
-                console.log("frame count")
-            }
-            loop()
-        }
-        // startLoop()
+        draw_voronoi(0, 0, seeds, colors, pointPixelSize, gridDims)
     }
 }
 
