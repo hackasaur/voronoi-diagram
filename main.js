@@ -18,8 +18,12 @@ function main() {
             ctx.font = `${font.fontSize}px ${font.fontStyle}`
         }
 
-        const distance_pythogoras = (p1, p2) => {
+        const distance_pythagoras = (p1, p2) => {
             return Math.sqrt(Math.pow((p1[0] - p2[0]), 2) + Math.pow((p1[1] - p2[1]), 2))
+        }
+
+        const distance_manhattan = (p1, p2) => {
+            return (Math.abs(p1[0] - p2[0]) + Math.abs(p1[1] - p2[1]))
         }
 
         function paintBackground(ctx) {
@@ -33,16 +37,15 @@ function main() {
         let points = []
         let colors = []
 
-        let point
         for (let i = 0; i < n; i++) {
             points.push(createPoint(
                 Math.round(ctx.canvas.width * Math.random()),
                 Math.round(ctx.canvas.height * Math.random())
             ))
             colors[i] = `rgb(
-                ${255 * Math.random() / 3},
                 ${255 * Math.random()},
-                ${255 * Math.random()}
+                ${255 * Math.random()},
+                ${255 * Math.random()/3}
                 )`
         }
 
@@ -54,7 +57,8 @@ function main() {
 
                     let closest_point
                     for (let point of points) {
-                        let dist = distance_pythogoras(point, pixel)
+                        let dist = distance_manhattan(point, pixel)
+                        // let dist = distance_pythagoras(point, pixel)
                         if (dist < min_dist) {
                             min_dist = dist
                             closest_point = point
@@ -65,13 +69,13 @@ function main() {
                 }
             }
 
-            // for (let point of points) {
-            //     ctx.fillStyle = "white"
-            //     ctx.fillRect(point[0], point[1], 2, 2)
-            // }
+            for (let point of points) {
+                ctx.fillStyle = "white"
+                ctx.fillRect(point[0], point[1], 2, 2)
+            }
         }
 
-        draw_voronoi(12, 12, 576, 576, points)
+        draw_voronoi(0, 0, 600, 600, points)
 
         function startLoop() {
             let done = false
